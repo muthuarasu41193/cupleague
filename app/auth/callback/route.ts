@@ -1,9 +1,10 @@
+import { ensureProfile } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 /**
  * Auth callback — exchanges the magic-link code for a session.
- * Profile is auto-created by the Supabase trigger (username from email).
+ * Ensures profile exists (fallback if DB trigger did not run).
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -14,6 +15,12 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await ensureProfile(supabase, user);
+      }
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

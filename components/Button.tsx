@@ -41,12 +41,13 @@ export function Button({
   disabled,
   children,
   className = "",
+  type = "button",
   onClick,
   ...props
 }: ButtonProps) {
   return (
     <button
-      type="button"
+      type={type}
       disabled={disabled || loading}
       className={cn(
         "inline-flex w-full items-center justify-center gap-2 font-semibold",

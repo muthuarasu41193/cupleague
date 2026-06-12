@@ -8,14 +8,16 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { FREE_LEAGUE_LIMIT } from "@/lib/constants";
+import { ensureProfile } from "@/lib/profile";
 import { cn } from "@/lib/utils";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/lib/razorpay";
 import { useSupabase } from "@/lib/hooks/useSupabase";
 import type { Profile } from "@/lib/types";
-import { generateInviteCode } from "@/utils/invite-code";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ShieldPlus } from "lucide-react";
+
+const EMOJI_OPTIONS = ["⚽", "🏆", "🔥", "🌍", "🇧🇷", "🇦🇷", "🦁", "🐐"];
 
 /** League creation form — freemium gated after first league */
 export default function CreateLeaguePage() {
@@ -33,8 +35,6 @@ export default function CreateLeaguePage() {
   const [description, setDescription] = useState("");
   const [emoji, setEmoji] = useState("⚽");
 
-  const EMOJI_OPTIONS = ["⚽", "🏆", "🔥", "🌍", "🇧🇷", "🇦🇷", "🦁", "🐐"];
-
   useEffect(() => {
     if (!supabase) return;
     const sb = supabase;
@@ -49,15 +49,17 @@ export default function CreateLeaguePage() {
         return;
       }
 
-      const { data } = await sb
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
+      const { profile: p, error: profileErr } = await ensureProfile(sb, user);
+      if (!p) {
+        setError(profileErr ?? "Could not load your profile.");
+        setLoading(false);
+        return;
+      }
 
-      setProfile(data);
+      setProfile(p);
       setLoading(false);
     }
+
     load();
   }, [router, supabase]);
 
@@ -68,7 +70,12 @@ export default function CreateLeaguePage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!profile || !supabase) return;
+    setError(null);
+
+    if (!name.trim()) {
+      setError("Please enter a league name.");
+      return;
+    }
 
     if (needsUpgrade) {
       setShowUpgrade(true);
@@ -76,59 +83,42 @@ export default function CreateLeaguePage() {
     }
 
     setSubmitting(true);
-    setError(null);
 
-    let inviteCode = generateInviteCode();
-    let attempts = 0;
+    try {
+      const res = await fetch("/api/leagues/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim(),
+          emoji,
+        }),
+      });
 
-    // Retry if code collision (unlikely)
-    while (attempts < 5) {
-      const { data: existing } = await supabase
-        .from("leagues")
-        .select("id")
-        .eq("invite_code", inviteCode)
-        .maybeSingle();
+      const data = await res.json();
 
-      if (!existing) break;
-      inviteCode = generateInviteCode();
-      attempts++;
-    }
+      if (res.status === 402 || data.error === "upgrade_required") {
+        setShowUpgrade(true);
+        return;
+      }
 
-    const { data: league, error: leagueError } = await supabase
-      .from("leagues")
-      .insert({
-        name: name.trim(),
-        description: description.trim() || null,
-        emoji,
-        invite_code: inviteCode,
-        creator_id: profile.id,
-      })
-      .select()
-      .single();
+      if (!res.ok) {
+        setError(data.error ?? "Failed to create league. Please try again.");
+        return;
+      }
 
-    if (leagueError) {
-      setError(leagueError.message);
+      router.push(`/${data.inviteCode}/dashboard`);
+      router.refresh();
+    } catch {
+      setError("Network error — check your connection and try again.");
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    // Creator joins automatically
-    await supabase.from("league_members").insert({
-      league_id: league.id,
-      user_id: profile.id,
-    });
-
-    // Increment leagues_created (RPC or direct update)
-    await supabase
-      .from("profiles")
-      .update({ leagues_created: profile.leagues_created + 1 })
-      .eq("id", profile.id);
-
-    router.push(`/${inviteCode}/dashboard`);
   }
 
   async function handleUpgrade() {
     setPayLoading(true);
+    setError(null);
 
     const loaded = await loadRazorpayScript();
     if (!loaded) {
@@ -175,8 +165,9 @@ export default function CreateLeaguePage() {
     setPayLoading(false);
   }
 
-  if (loading || !supabase)
+  if (loading || !supabase) {
     return <LoadingSpinner message="Loading your profile..." />;
+  }
 
   return (
     <div>
@@ -248,7 +239,7 @@ export default function CreateLeaguePage() {
           </p>
         )}
 
-        <Button type="submit" loading={submitting} variant="gold">
+        <Button type="submit" loading={submitting} variant="gold" disabled={!profile}>
           Launch League
         </Button>
 
