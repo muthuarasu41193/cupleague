@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
+/*
+ * CupLeague colour palette — edit these to retheme the app.
+ * Green = pitch, Black = night sky, Gold = trophy
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --pitch-black: #0a0f0a;
+  --pitch-card: #141a14;
+  --pitch-muted: #1e2a1e;
+  --pitch-border: #2a3d2a;
+  --pitch-green: #1a8f3c;
+  --pitch-green-light: #22b34a;
+  --pitch-gold: #d4af37;
+  --pitch-gold-light: #f0c94a;
+  --pitch-muted-text: #8fa88f;
+  --background: var(--pitch-black);
+  --foreground: #f0f4f0;
 }
 
 @theme inline {
+  --color-pitch-black: var(--pitch-black);
+  --color-pitch-card: var(--pitch-card);
+  --color-pitch-muted: var(--pitch-muted);
+  --color-pitch-border: var(--pitch-border);
+  --color-pitch-green: var(--pitch-green);
+  --color-pitch-green-light: var(--pitch-green-light);
+  --color-pitch-gold: var(--pitch-gold);
+  --color-pitch-gold-light: var(--pitch-gold-light);
+  --color-pitch-muted-text: var(--pitch-muted-text);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Telegram Mini App — uses Telegram theme when available */
+body.telegram-mini-app {
+  background: var(--tg-bg, var(--pitch-black));
+  color: var(--tg-text, var(--foreground));
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  min-height: 100dvh;
+}
+
+/* Subtle pitch-line pattern on hero sections */
+.pitch-pattern {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 49px,
+    rgba(26, 143, 60, 0.06) 49px,
+    rgba(26, 143, 60, 0.06) 50px
+  );
+}
+
+/* Gold shimmer for premium badges */
+.gold-shimmer {
+  background: linear-gradient(
+    135deg,
+    var(--pitch-gold) 0%,
+    var(--pitch-gold-light) 50%,
+    var(--pitch-gold) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }

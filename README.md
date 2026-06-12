@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CupLeague ⚽
 
-## Getting Started
+Private FIFA 2026 prediction leagues — mobile-first, dark football theme, built with Next.js 15.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Next.js 15** (App Router)
+- **Tailwind CSS 4**
+- **Supabase** (`@supabase/ssr` + `@supabase/supabase-js`) — magic-link auth & realtime
+- **Razorpay** — ₹499 one-time premium upgrade
+- **lucide-react**, **date-fns**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Quick Start
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Clone & install**
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Environment** — copy `.env.example` to `.env.local` and fill in values:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-## Learn More
+3. **Supabase** — run `supabase/schema.sql` then `supabase/seed.sql` in the SQL Editor.
 
-To learn more about Next.js, take a look at the following resources:
+4. **Auth redirect** — in Supabase Dashboard → Authentication → URL Configuration, add:
+   - Site URL: `http://localhost:3000`
+   - Redirect URLs: `http://localhost:3000/auth/callback`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. **Realtime** — enable replication for `predictions`, `reactions`, `matches` tables.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+6. **Run**
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+## Customisation
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Edit `lib/constants.ts` to change pricing, hero text, emojis, and share messages without touching component code.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Scoring logic lives in `utils/points.ts`.
+
+## Routes
+
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page |
+| `/login` | Magic-link sign in |
+| `/create` | Create a league |
+| `/[inviteCode]` | Join a league |
+| `/[inviteCode]/dashboard` | Matches, leaderboard, invite |
+| `/api/create-order` | Razorpay order creation |
+| `/api/verify-payment` | Payment verification |
+
+## Premium (Freemium)
+
+- Free users: **1 league**
+- Premium (₹499 one-time): **unlimited leagues** for full FIFA 2026
