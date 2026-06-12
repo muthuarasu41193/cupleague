@@ -3,13 +3,19 @@
 import { Button } from "@/components/Button";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { UpgradeModal } from "@/components/UpgradeModal";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { FREE_LEAGUE_LIMIT } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/lib/razorpay";
 import { useSupabase } from "@/lib/hooks/useSupabase";
 import type { Profile } from "@/lib/types";
 import { generateInviteCode } from "@/utils/invite-code";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ShieldPlus } from "lucide-react";
 
 /** League creation form — freemium gated after first league */
 export default function CreateLeaguePage() {
@@ -148,7 +154,7 @@ export default function CreateLeaguePage() {
       description: "Unlimited leagues for FIFA 2026",
       order_id: data.orderId,
       prefill: { email: profile?.email },
-      theme: { color: "#1a8f3c" },
+      theme: { color: "#00a651" },
       handler: async (response) => {
         const verifyRes = await fetch("/api/verify-payment", {
           method: "POST",
@@ -174,19 +180,16 @@ export default function CreateLeaguePage() {
 
   return (
     <div>
-      <div className="mb-8 text-center">
-        <span className="text-5xl">🏟️</span>
-        <h1 className="mt-3 text-2xl font-black text-white">Create League</h1>
-        <p className="text-pitch-muted-text">
-          Set up your private FIFA 2026 prediction pool
-        </p>
-      </div>
+      <PageHeader
+        icon={ShieldPlus}
+        title="Create League"
+        subtitle="Set up your private FIFA 2026 prediction pool"
+      />
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        {/* Emoji picker */}
         <div>
-          <label className="mb-2 block text-sm font-medium text-pitch-muted-text">
-            League emoji
+          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            League badge
           </label>
           <div className="flex flex-wrap gap-2">
             {EMOJI_OPTIONS.map((e) => (
@@ -194,11 +197,12 @@ export default function CreateLeaguePage() {
                 key={e}
                 type="button"
                 onClick={() => setEmoji(e)}
-                className={`flex h-12 w-12 items-center justify-center rounded-xl text-2xl transition ${
+                className={cn(
+                  "flex h-12 w-12 items-center justify-center rounded-xl text-2xl transition",
                   emoji === e
-                    ? "bg-pitch-green ring-2 ring-pitch-green"
-                    : "bg-pitch-card hover:bg-pitch-muted"
-                }`}
+                    ? "bg-pitch/20 ring-2 ring-pitch"
+                    : "bg-muted ring-1 ring-border hover:bg-border/40"
+                )}
               >
                 {e}
               </button>
@@ -206,24 +210,22 @@ export default function CreateLeaguePage() {
           </div>
         </div>
 
-        <div>
-          <label htmlFor="name" className="mb-2 block text-sm font-medium text-pitch-muted-text">
-            League name *
-          </label>
-          <input
-            id="name"
-            required
-            maxLength={50}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Office World Cup 2026"
-            className="w-full rounded-2xl border border-pitch-border bg-pitch-card py-4 px-4 text-lg text-white placeholder:text-pitch-muted-text focus:border-pitch-green focus:outline-none focus:ring-2 focus:ring-pitch-green/30"
-          />
-        </div>
+        <Input
+          id="name"
+          label="League name"
+          required
+          maxLength={50}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Office World Cup 2026"
+        />
 
         <div>
-          <label htmlFor="desc" className="mb-2 block text-sm font-medium text-pitch-muted-text">
-            Short description
+          <label
+            htmlFor="desc"
+            className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+          >
+            Description
           </label>
           <textarea
             id="desc"
@@ -232,25 +234,31 @@ export default function CreateLeaguePage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Who will be crowned champion?"
-            className="w-full resize-none rounded-2xl border border-pitch-border bg-pitch-card py-4 px-4 text-white placeholder:text-pitch-muted-text focus:border-pitch-green focus:outline-none focus:ring-2 focus:ring-pitch-green/30"
+            className={cn(
+              "w-full resize-none rounded-xl border border-border bg-surface px-4 py-3.5",
+              "text-foreground placeholder:text-muted-foreground/60",
+              "focus:border-pitch focus:outline-none focus:ring-2 focus:ring-pitch/20"
+            )}
           />
         </div>
 
         {error && (
-          <p className="rounded-xl bg-red-500/10 px-4 py-2 text-sm text-red-400">
+          <p className="rounded-xl bg-danger/10 px-4 py-2.5 text-sm text-red-400 ring-1 ring-danger/20">
             {error}
           </p>
         )}
 
         <Button type="submit" loading={submitting} variant="gold">
-          Create League 🚀
+          Launch League
         </Button>
 
         {profile && !profile.is_premium && (
-          <p className="text-center text-sm text-pitch-muted-text">
-            {profile.leagues_created}/{FREE_LEAGUE_LIMIT} free league
-            {profile.leagues_created !== 1 ? "s" : ""} used
-          </p>
+          <Card variant="default" padding="sm" className="text-center">
+            <Badge variant="muted">
+              {profile.leagues_created}/{FREE_LEAGUE_LIMIT} free league
+              {profile.leagues_created !== 1 ? "s" : ""} used
+            </Badge>
+          </Card>
         )}
       </form>
 

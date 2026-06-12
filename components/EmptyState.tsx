@@ -1,27 +1,47 @@
+import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 interface EmptyStateProps {
+  icon?: LucideIcon;
   emoji?: string;
   title: string;
   description?: string;
   action?: ReactNode;
 }
 
-/** Friendly empty state for lists and tabs */
 export function EmptyState({
-  emoji = "⚽",
+  icon: Icon,
+  emoji,
   title,
   description,
   action,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-pitch-border bg-pitch-card/50 px-6 py-12 text-center">
-      <span className="text-5xl">{emoji}</span>
-      <h3 className="text-xl font-bold text-white">{title}</h3>
-      {description && (
-        <p className="max-w-sm text-pitch-muted-text">{description}</p>
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center gap-4 rounded-2xl",
+        "border border-dashed border-border/60 bg-muted/30 px-6 py-14 text-center"
       )}
-      {action && <div className="mt-2 w-full max-w-xs">{action}</div>}
+    >
+      {Icon ? (
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted ring-1 ring-border">
+          <Icon className="h-6 w-6 text-muted-foreground" strokeWidth={1.5} />
+        </div>
+      ) : (
+        <span className="text-4xl">{emoji ?? "⚽"}</span>
+      )}
+      <div>
+        <h3 className="font-display text-xl tracking-wide text-foreground">
+          {title.toUpperCase()}
+        </h3>
+        {description && (
+          <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
+            {description}
+          </p>
+        )}
+      </div>
+      {action && <div className="mt-1 w-full max-w-xs">{action}</div>}
     </div>
   );
 }

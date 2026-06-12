@@ -1,5 +1,9 @@
 import { Button } from "@/components/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
+import { Users } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { JoinLeagueButton } from "./JoinLeagueButton";
@@ -8,19 +12,8 @@ interface JoinPageProps {
   params: Promise<{ inviteCode: string }>;
 }
 
-/** Reserved paths that should not be treated as invite codes */
-const RESERVED = new Set([
-  "create",
-  "login",
-  "auth",
-  "api",
-  "dashboard",
-]);
+const RESERVED = new Set(["create", "login", "auth", "api", "dashboard"]);
 
-/**
- * Join page — /[inviteCode]
- * Shows league info and "Join this League" button.
- */
 export default async function JoinPage({ params }: JoinPageProps) {
   const { inviteCode } = await params;
   const code = inviteCode.toUpperCase();
@@ -43,7 +36,6 @@ export default async function JoinPage({ params }: JoinPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // If already a member, go straight to dashboard
   if (user) {
     const { data: membership } = await supabase
       .from("league_members")
@@ -63,37 +55,51 @@ export default async function JoinPage({ params }: JoinPageProps) {
     .eq("league_id", league.id);
 
   return (
-    <div className="flex flex-col items-center gap-8 py-8 text-center">
-      <span className="text-7xl">{league.emoji}</span>
-
-      <div>
-        <h1 className="text-3xl font-black text-white">{league.name}</h1>
+    <div className="flex flex-col items-center gap-8 py-6">
+      <Card variant="glass" className="card-shine w-full text-center">
+        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-muted text-5xl ring-1 ring-border">
+          {league.emoji}
+        </div>
+        <Badge variant="host" className="mb-3">
+          Private League
+        </Badge>
+        <h1 className="font-display text-4xl tracking-wide text-foreground">
+          {league.name.toUpperCase()}
+        </h1>
         {league.description && (
-          <p className="mt-2 text-lg text-pitch-muted-text">
+          <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
             {league.description}
           </p>
         )}
-      </div>
+      </Card>
 
-      <div className="rounded-2xl bg-pitch-card px-6 py-3">
-        <p className="text-sm text-pitch-muted-text">Invite code</p>
-        <p className="font-mono text-2xl font-black tracking-widest text-pitch-gold">
+      <Card variant="gold" className="w-full text-center">
+        <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-muted-foreground">
+          Invite Code
+        </p>
+        <p className="font-mono text-3xl font-bold tracking-[0.3em] text-trophy">
           {league.invite_code}
         </p>
-        <p className="mt-1 text-sm text-pitch-muted-text">
+        <div
+          className={cn(
+            "mt-3 inline-flex items-center gap-1.5 rounded-lg bg-muted/60",
+            "px-3 py-1 text-xs text-muted-foreground"
+          )}
+        >
+          <Users className="h-3.5 w-3.5" />
           {memberCount ?? 0} member{(memberCount ?? 0) !== 1 ? "s" : ""}
-        </p>
-      </div>
+        </div>
+      </Card>
 
       {user ? (
         <JoinLeagueButton leagueId={league.id} inviteCode={code} />
       ) : (
         <div className="w-full max-w-xs">
           <Link href={`/login?next=/${code}`}>
-            <Button variant="gold">Sign in to Join</Button>
+            <Button variant="gold">Sign In to Join</Button>
           </Link>
-          <p className="mt-3 text-sm text-pitch-muted-text">
-            You need an account to join this league
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            Account required to enter this league
           </p>
         </div>
       )}

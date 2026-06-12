@@ -9,16 +9,20 @@ import type {
   Reaction,
 } from "@/lib/types";
 import { useSupabase } from "@/lib/hooks/useSupabase";
+import { cn } from "@/lib/utils";
 import {
   calculateAccuracy,
   calculateStreak,
   sumReactionPoints,
 } from "@/utils/points";
+import { CalendarDays, Share2, Trophy } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "./EmptyState";
 import { LeaderboardRow } from "./LeaderboardRow";
 import { MatchCard } from "./MatchCard";
 import { ShareButtons } from "./ShareButtons";
+import { Badge } from "./ui/Badge";
+import { Card } from "./ui/Card";
 
 type Tab = "matches" | "leaderboard" | "invite";
 
@@ -31,10 +35,12 @@ interface DashboardTabsProps {
   currentUserId: string | null;
 }
 
-/**
- * Tabbed league dashboard: Matches | Leaderboard | Invite
- * Subscribes to Supabase Realtime for live leaderboard & reactions.
- */
+const TABS: { id: Tab; label: string; icon: typeof CalendarDays }[] = [
+  { id: "matches", label: "Fixtures", icon: CalendarDays },
+  { id: "leaderboard", label: "Standings", icon: Trophy },
+  { id: "invite", label: "Invite", icon: Share2 },
+];
+
 export function DashboardTabs({
   league,
   initialMatches,
@@ -75,7 +81,6 @@ export function DashboardTabs({
     rebuildLeaderboard();
   }, [rebuildLeaderboard]);
 
-  // Realtime subscriptions for live updates
   useEffect(() => {
     if (!supabase) return;
 
@@ -174,59 +179,66 @@ export function DashboardTabs({
     }
   }
 
-  const tabs: { id: Tab; label: string; emoji: string }[] = [
-    { id: "matches", label: "Matches", emoji: "⚽" },
-    { id: "leaderboard", label: "Leaderboard", emoji: "🏆" },
-    { id: "invite", label: "Invite", emoji: "📨" },
-  ];
-
-  // Show upcoming matches first, then finished
   const sortedMatches = [...matches].sort((a, b) => {
     if (a.status !== b.status) return a.status === "upcoming" ? -1 : 1;
     return a.match_date.localeCompare(b.match_date);
   });
 
-  const upcomingMatches = sortedMatches.filter(
-    (m) => m.status === "upcoming"
-  ).slice(0, 10);
+  const upcomingMatches = sortedMatches
+    .filter((m) => m.status === "upcoming")
+    .slice(0, 10);
 
   return (
     <div>
-      {/* League header */}
-      <div className="mb-6 text-center">
-        <span className="text-5xl">{league.emoji}</span>
-        <h1 className="mt-2 text-2xl font-black text-white">{league.name}</h1>
+      {/* League banner */}
+      <Card variant="glass" className="card-shine mb-6 text-center">
+        <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted text-4xl ring-1 ring-border">
+          {league.emoji}
+        </div>
+        <h1 className="font-display text-3xl tracking-wide text-foreground">
+          {league.name.toUpperCase()}
+        </h1>
         {league.description && (
-          <p className="text-pitch-muted-text">{league.description}</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {league.description}
+          </p>
         )}
-      </div>
+        <div className="mt-3 flex justify-center gap-2">
+          <Badge variant="default">{members.length} players</Badge>
+          <Badge variant="host">FIFA 2026</Badge>
+        </div>
+      </Card>
 
       {/* Tab bar */}
-      <div className="mb-6 flex rounded-2xl bg-pitch-black p-1">
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl py-3 text-sm font-semibold transition ${
-              tab === t.id
-                ? "bg-pitch-green text-white"
-                : "text-pitch-muted-text"
-            }`}
-          >
-            <span>{t.emoji}</span>
-            {t.label}
-          </button>
-        ))}
+      <div className="mb-6 flex gap-1 rounded-2xl bg-muted p-1">
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.id;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 text-[11px] font-semibold uppercase tracking-wide transition",
+                active
+                  ? "bg-pitch text-white tab-active-glow"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Icon className="h-4 w-4" strokeWidth={active ? 2.5 : 2} />
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Matches tab */}
       {tab === "matches" && (
         <div className="flex flex-col gap-4">
           {upcomingMatches.length === 0 ? (
             <EmptyState
-              emoji="📅"
-              title="No upcoming matches"
-              description="Check back soon — new fixtures are on the way!"
+              icon={CalendarDays}
+              title="No fixtures yet"
+              description="Match schedule will appear here once published."
             />
           ) : (
             upcomingMatches.map((match) => (
@@ -242,7 +254,6 @@ export function DashboardTabs({
             ))
           )}
 
-          {/* Finished matches with points */}
           {sortedMatches
             .filter((m) => m.status === "finished")
             .map((match) => (
@@ -259,14 +270,13 @@ export function DashboardTabs({
         </div>
       )}
 
-      {/* Leaderboard tab */}
       {tab === "leaderboard" && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2.5">
           {leaderboard.length === 0 ? (
             <EmptyState
-              emoji="🏆"
-              title="No players yet"
-              description="Invite friends to start competing!"
+              icon={Trophy}
+              title="Standings empty"
+              description="Invite friends to start the competition."
             />
           ) : (
             leaderboard.map((entry, i) => (
@@ -283,7 +293,6 @@ export function DashboardTabs({
         </div>
       )}
 
-      {/* Invite tab */}
       {tab === "invite" && (
         <ShareButtons inviteCode={league.invite_code} leagueName={league.name} />
       )}

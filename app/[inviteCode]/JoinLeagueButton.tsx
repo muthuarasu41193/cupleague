@@ -55,7 +55,7 @@ export function JoinLeagueButton({
   return (
     <div className="w-full max-w-xs">
       <Button variant="gold" onClick={handleJoin} loading={loading}>
-        Join this League 🏆
+        Join League
       </Button>
       {error && (
         <p className="mt-2 text-sm text-red-400">{error}</p>

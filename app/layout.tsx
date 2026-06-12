@@ -1,28 +1,39 @@
 import { Header } from "@/components/Header";
+import { StadiumBackground } from "@/components/StadiumBackground";
 import { TelegramProvider } from "@/components/TelegramProvider";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Bebas_Neue, DM_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({
-  variable: "--font-geist-sans",
+const bebas = Bebas_Neue({
+  weight: "400",
+  variable: "--font-bebas",
+  subsets: ["latin"],
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: `${APP_NAME} — FIFA 2026 Private Leagues`,
+  title: `${APP_NAME} — FIFA World Cup 2026`,
   description: APP_TAGLINE,
 };
 
-/** Supabase auth requires dynamic rendering (no static prerender without env) */
 export const dynamic = "force-dynamic";
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#0a0f0a",
+  themeColor: "#06080d",
 };
 
 export default function RootLayout({
@@ -31,17 +42,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geist.variable} h-full`}>
+    <html
+      lang="en"
+      className={`${bebas.variable} ${dmSans.variable} ${geistMono.variable} h-full`}
+    >
       <head>
-        {/* Telegram Mini App SDK — enables WebApp detection & haptics */}
         <script src="https://telegram.org/js/telegram-web-app.js" async />
       </head>
-      <body className="min-h-full bg-pitch-black antialiased">
+      <body className="min-h-full bg-background antialiased">
         <TelegramProvider>
-          <Header />
-          <main className="mx-auto min-h-[calc(100dvh-57px)] max-w-lg px-4 py-6">
-            {children}
-          </main>
+          <StadiumBackground>
+            <Header />
+            <main className="mx-auto min-h-[calc(100dvh-60px)] max-w-lg px-4 py-6">
+              {children}
+            </main>
+          </StadiumBackground>
         </TelegramProvider>
       </body>
     </html>
